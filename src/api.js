@@ -1,8 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 const API_ORIGIN = new URL(API_URL, window.location.origin).origin;
-export const COMPANY_EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'yassinebs987@gmail.com';
-export const COMPANY_PHONE = import.meta.env.VITE_COMPANY_PHONE || '+216 95 504 773';
-export const COMPANY_WHATSAPP = (import.meta.env.VITE_COMPANY_WHATSAPP || COMPANY_PHONE).replace(/\D/g, '');
+export const COMPANY_EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'Foodtransferttunisia@outlook.fr';
+export const COMPANY_PHONE = import.meta.env.VITE_COMPANY_PHONE || '+216 22 066 284';
+export const COMPANY_WHATSAPP = (import.meta.env.VITE_COMPANY_WHATSAPP || '21622066284').replace(/\D/g, '');
 
 export async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});

@@ -10,22 +10,60 @@ function ErrorMessage({ error }) { return <div className="error-message"><Circle
 export function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
-    Promise.all([api('/products'), api('/categories')]).then(([p, c]) => { setProducts(p.slice(0, 4)); setCategories(c); }).catch((e) => setError(e.message));
+    let active = true;
+    Promise.all([api('/products'), api('/categories')])
+      .then(([p, c]) => { if (active) { setProducts(p); setCategories(c); } })
+      .catch((e) => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
+  const query = searchTerm.trim().toLocaleLowerCase();
+  const visibleProducts = products.filter((product) => {
+    const inCategory = !activeCategory || product.category_slug === activeCategory;
+    const searchable = `${product.name} ${product.description} ${product.format} ${product.category_name}`.toLocaleLowerCase();
+    return inCategory && (!query || searchable.includes(query));
+  });
   const categoryVisuals = [
     { icon: Wheat, note: 'Ingrédients à découvrir pour la cuisine et la pâtisserie.' },
     { icon: FlaskConical, note: 'Acides et ingrédients pour différents usages.' },
     { icon: PackageCheck, note: 'Produits spécifiques, à utiliser selon les précautions indiquées.' }
   ];
   return <>
+    <section className="home-catalog section-shell" aria-labelledby="store-title">
+      <div className="store-heading">
+        <div className="store-heading-copy">
+          <span className="eyebrow">FOOD TRANSFERT TUNISIA · CATALOGUE</span>
+          <h1 id="store-title">Tout pour vos recettes,<br /><em>à portée de main.</em></h1>
+          <p>Parcourez nos produits, comparez les formats et contactez-nous pour les prix et disponibilités.</p>
+        </div>
+        <Link className="store-contact" to="/contact">
+          <span className="store-contact-icon"><MessageCircle size={19} /></span>
+          <span><b>Besoin d’un conseil ?</b><small>Nous sommes à votre écoute</small></span>
+          <ArrowUpRight size={18} />
+        </Link>
+      </div>
+      <div className="store-controls">
+        <label className="store-search"><Search size={20} /><input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Rechercher un produit, un format…" aria-label="Rechercher un produit" /></label>
+        <span className="store-count">{loading ? 'Chargement du catalogue…' : `${visibleProducts.length} produit${visibleProducts.length === 1 ? '' : 's'}`}</span>
+      </div>
+      <div className="store-categories" aria-label="Filtrer par catégorie">
+        <button className={!activeCategory ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory('')}>Tout voir</button>
+        {categories.map((category) => <button key={category.id} className={activeCategory === category.slug ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory(category.slug)}>{category.name}</button>)}
+      </div>
+      <div className="store-results-heading"><h2>{activeCategory ? categories.find((item) => item.slug === activeCategory)?.name : 'À découvrir'}</h2><span>Des produits sélectionnés pour vous</span></div>
+      {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : visibleProducts.length ? <div className="product-grid home-product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => { setSearchTerm(''); setActiveCategory(''); }}>Effacer les filtres <ArrowRight size={16} /></button></div>}
+    </section>
     <section className="hero home-hero">
       <div className="hero-copy">
         <div className="eyebrow"><span className="eyebrow-line" /> FOOD TRANSFERT TUNISIA · BIENVENUE</div>
-        <h1>Les bons produits pour vos recettes et vos <em>envies.</em></h1>
-        <p>Découvrez nos ingrédients pour la cuisine et la pâtisserie. Parcourez les produits et leurs formats, puis écrivez-nous pour connaître les prix ou poser une question.</p>
-        <div className="hero-actions"><Link className="button button-primary" to="/catalogue">Voir les produits <ArrowUpRight size={17} /></Link><Link className="button button-outline" to="/contact">Nous contacter <ArrowRight size={16} /></Link></div>
+        <h2>Les bons produits pour vos recettes et vos <em>envies.</em></h2>
+        <p>Découvrez nos ingrédients pour la cuisine et la pâtisserie. Consultez les formats, puis contactez-nous pour connaître les prix ou poser une question.</p>
+        <div className="hero-actions"><Link className="button button-primary" to="/catalogue">Explorer tout le catalogue <ArrowUpRight size={17} /></Link><Link className="button button-outline" to="/contact">Nous contacter <ArrowRight size={16} /></Link></div>
         <div className="hero-proof"><span className="proof-mark"><Check size={15} /></span><span><b>Des produits à découvrir</b><br />Cuisine, pâtisserie et plus</span><span className="proof-divider" /><span className="proof-mark"><Check size={15} /></span><span><b>À votre écoute</b><br />Appelez-nous ou écrivez-nous</span></div>
       </div>
       <div className="hero-visual home-hero-visual">
@@ -45,7 +83,6 @@ export function HomePage() {
           </Link>;
         })}
       </div>
-      {error && <ErrorMessage error={error} />}
     </section>
     <section className="how-section" id="distribution">
       <div className="section-shell">
@@ -55,11 +92,6 @@ export function HomePage() {
           <article className="step-card"><span className="step-icon"><PackageCheck size={23} /></span><span className="step-number">02 / CHOISIR</span><h3>Consultez les formats</h3><p>Regardez les détails et les formats disponibles pour chaque produit.</p></article>
           <article className="step-card"><span className="step-icon"><MessageCircle size={23} /></span><span className="step-number">03 / NOUS ÉCRIRE</span><h3>Demandez le prix</h3><p>Écrivez-nous pour connaître le prix, la disponibilité ou les précautions d’usage.</p></article>
         </div>
-      </div>
-    </section>
-    <section className="featured-section">
-      <div className="section-shell"><div className="section-heading featured-heading"><div><span className="eyebrow">À DÉCOUVRIR</span><h2>Nos produits<br /><em>du moment.</em></h2></div><Link className="text-link" to="/catalogue">Voir tout le catalogue <ArrowRight size={16} /></Link></div>
-        {error ? <ErrorMessage error={error} /> : products.length ? <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <Loading label="Nos produits arrivent…" />}
       </div>
     </section>
     <section className="quote-band"><div className="quote-band-inner"><div><span className="eyebrow">UNE QUESTION ?</span><h2>Nous sommes là<br /><em>pour vous répondre.</em></h2></div><div className="quote-band-actions"><Link className="button button-light" to="/contact">Nous contacter <ArrowUpRight size={17} /></Link><a className="button button-whatsapp" href={`https://wa.me/${COMPANY_WHATSAPP}`} target="_blank" rel="noreferrer"><MessageCircle size={17} /> WhatsApp</a></div></div></section>
@@ -140,7 +172,6 @@ export function ContactPage() {
     const whatsappMessage = [
       'Bonjour, voici ma demande envoyée depuis votre site.',
       `Nom : ${body.name}`,
-      `E-mail : ${body.email}`,
       `Téléphone : ${body.phone}`,
       `Produit : ${selectedProduct?.name || 'Non précisé'}`,
       `Quantité : ${body.quantity?.trim() || 'Non précisée'}`,
@@ -166,13 +197,12 @@ export function ContactPage() {
     <div className="page-intro"><span className="eyebrow">À VOTRE ÉCOUTE</span><h1>Une question ? <em>Écrivez-nous.</em></h1><p>Demandez un prix, vérifiez la disponibilité d’un produit ou posez-nous une question.</p></div>
     <div className="contact-layout"><div className="contact-aside"><div className="aside-label">CONTACT</div><h2>Nous sommes<br />là pour <em>vous.</em></h2><p>Nous répondons à vos questions sur les produits, les formats et leur utilisation.</p><a className="contact-channel" href={`mailto:${COMPANY_EMAIL}`}><span><ArrowUpRight size={15} /></span>{COMPANY_EMAIL}</a><a className="contact-channel" href={`tel:${COMPANY_PHONE.replace(/[^\d+]/g, '')}`}><span><ArrowUpRight size={15} /></span>{COMPANY_PHONE}</a><a className="contact-channel whatsapp-channel" href={`https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent('Bonjour, je souhaite obtenir des informations sur vos produits.')}`} target="_blank" rel="noreferrer"><span><MessageCircle size={15} /></span>Écrire sur WhatsApp</a><div className="aside-rule" /><span className="aside-label">FOOD TRANSFERT TUNISIA</span><p className="aside-small">Des ingrédients et des produits à découvrir pour vos recettes et vos besoins.</p></div>
       <div className="form-panel"><div className="form-title"><div><span className="eyebrow">INFORMATIONS & PRIX</span><h2>Votre demande</h2></div><span className="required-note">* Champs obligatoires</span></div>
-        {success ? <div className="success-state"><span className="success-icon"><Check size={28} /></span><h3>Demande bien reçue.</h3><p>{emailSent ? 'La notification a été envoyée par e-mail. WhatsApp s’ouvre avec les détails : appuyez sur Envoyer pour nous écrire aussi.' : 'Votre demande est enregistrée, mais la notification e-mail n’a pas été envoyée. WhatsApp s’ouvre avec les détails : appuyez sur Envoyer pour nous écrire.'}</p><a className="button button-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle size={17} /> Ouvrir WhatsApp</a><button className="text-link" onClick={() => setSuccess(false)}>Envoyer une autre demande <ArrowRight size={16} /></button></div> : <form className="quote-form" onSubmit={submit}>
+        {success ? <div className="success-state"><span className="success-icon"><Check size={28} /></span><h3>Demande bien reçue.</h3><p>{emailSent ? 'Votre demande est enregistrée. Nous vous répondrons au numéro indiqué. Un e-mail de notification a également été envoyé.' : 'Votre demande est enregistrée, mais l’e-mail de notification interne n’a pas été envoyé. WhatsApp s’ouvre avec les détails : appuyez sur Envoyer pour nous écrire.'}</p><a className="button button-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle size={17} /> Ouvrir WhatsApp</a><button className="text-link" onClick={() => setSuccess(false)}>Envoyer une autre demande <ArrowRight size={16} /></button></div> : <form className="quote-form" onSubmit={submit}>
           {error && <ErrorMessage error={error} />}
-          <div className="form-row"><label>Nom et prénom *<input name="name" required minLength="2" maxLength="120" autoComplete="name" placeholder="Votre nom" /></label><label>Adresse e-mail *<input name="email" type="email" required maxLength="254" autoComplete="email" placeholder="votre@email.com" /></label></div>
-          <div className="form-row"><label>Téléphone *<input name="phone" type="tel" required minLength="6" maxLength="40" autoComplete="tel" placeholder="+216" /></label><label>Produit concerné<select value={productId} onChange={(e) => setProductId(e.target.value)} disabled={loading}><option value="">Sélectionner un produit</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label></div>
-          <label>Quantité souhaitée (facultatif)<input name="quantity" maxLength="100" placeholder="Ex. 1 sac" /></label>
+          <div className="form-row"><label>Nom et prénom *<input name="name" required minLength="2" maxLength="120" autoComplete="name" placeholder="Votre nom" /></label><label>Téléphone *<input name="phone" type="tel" inputMode="tel" required minLength="6" maxLength="40" autoComplete="tel" placeholder="+216 22 066 284" /></label></div>
+          <div className="form-row"><label>Produit concerné<select value={productId} onChange={(e) => setProductId(e.target.value)} disabled={loading}><option value="">Sélectionner un produit</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label><label>Quantité souhaitée (facultatif)<input name="quantity" maxLength="100" placeholder="Ex. 1 sac" /></label></div>
           <label>Votre message<textarea name="message" rows="4" maxLength="2000" placeholder="Votre question ou les détails utiles…" /></label>
-          <div className="form-submit-row"><span>Vos coordonnées restent confidentielles.</span><button className="button button-primary" disabled={sending}>{sending ? 'Envoi en cours…' : 'Envoyer'} <ArrowUpRight size={17} /></button></div>
+          <div className="form-submit-row"><span>Nous vous répondrons au numéro indiqué.</span><button className="button button-primary" disabled={sending}>{sending ? 'Envoi en cours…' : 'Envoyer'} <ArrowUpRight size={17} /></button></div>
         </form>}
       </div></div>
   </section>;
@@ -241,7 +271,7 @@ function AdminPage() {
     <div className="admin-tabs"><button className={view === 'quotes' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('quotes')}>Demandes reçues <span>{quotes.filter((q) => q.status === 'new').length}</span></button><button className={view === 'products' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('products')}>Produits <span>{products.length}</span></button></div>
     {error && <ErrorMessage error={error} />}
     {view === 'quotes' ? <div className="admin-content"><div className="admin-toolbar"><div><h2>Demandes reçues</h2><p>Suivi des questions et demandes de prix envoyées depuis le site.</p></div><label className="select-filter">Statut <span><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Tous les statuts</option><option value="new">Nouvelles</option><option value="contacted">Contactées</option><option value="closed">Clôturées</option></select><ChevronDown size={15} /></span></label></div>
-      {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table"><thead><tr><th>Demande</th><th>Produit / quantité</th><th>Reçue le</th><th>Statut</th><th>Action</th></tr></thead><tbody>{quotes.map((quote) => <tr key={quote.id}><td><b>{quote.name}</b><a href={`mailto:${quote.email}`}>{quote.email}</a><span>{quote.phone}</span>{quote.message && <small>{quote.message}</small>}</td><td>{quote.product_name || 'Produit non précisé'}<span>{quote.quantity}</span></td><td>{new Date(quote.created_at).toLocaleDateString('fr-FR')}</td><td><span className={`status-badge ${quote.status}`}>{quote.status === 'new' ? 'Nouvelle' : quote.status === 'contacted' ? 'Contactée' : 'Clôturée'}</span></td><td className="table-actions"><select className="status-select" value={quote.status} onChange={(e) => changeStatus(quote.id, e.target.value)} aria-label={`Changer le statut de la demande ${quote.id}`}><option value="new">Nouvelle</option><option value="contacted">Contactée</option><option value="closed">Clôturée</option></select><button className="danger-action" onClick={() => removeQuote(quote)} aria-label={`Supprimer la demande de ${quote.name}`}>Supprimer</button></td></tr>)}</tbody></table>{!quotes.length && <div className="empty-state"><p>Aucune demande pour ce filtre.</p></div>}</div>}</div>
+      {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table"><thead><tr><th>Demande</th><th>Produit / quantité</th><th>Reçue le</th><th>Statut</th><th>Action</th></tr></thead><tbody>{quotes.map((quote) => <tr key={quote.id}><td><b>{quote.name}</b>{quote.email && <a href={`mailto:${quote.email}`}>{quote.email}</a>}<a href={`tel:${quote.phone.replace(/[^\d+]/g, '')}`}>{quote.phone}</a>{quote.message && <small>{quote.message}</small>}</td><td>{quote.product_name || 'Produit non précisé'}<span>{quote.quantity}</span></td><td>{new Date(quote.created_at).toLocaleDateString('fr-FR')}</td><td><span className={`status-badge ${quote.status}`}>{quote.status === 'new' ? 'Nouvelle' : quote.status === 'contacted' ? 'Contactée' : 'Clôturée'}</span></td><td className="table-actions"><select className="status-select" value={quote.status} onChange={(e) => changeStatus(quote.id, e.target.value)} aria-label={`Changer le statut de la demande ${quote.id}`}><option value="new">Nouvelle</option><option value="contacted">Contactée</option><option value="closed">Clôturée</option></select><button className="danger-action" onClick={() => removeQuote(quote)} aria-label={`Supprimer la demande de ${quote.name}`}>Supprimer</button></td></tr>)}</tbody></table>{!quotes.length && <div className="empty-state"><p>Aucune demande pour ce filtre.</p></div>}</div>}</div>
     : <div className="admin-content"><div className="admin-toolbar"><div><h2>Catalogue produits</h2><p>Gérez les fiches visibles sur le site.</p></div><button className="button button-primary" onClick={() => { setEditing(null); setShowForm(true); }}>Ajouter un produit <ArrowUpRight size={16} /></button></div>
       {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table product-admin-table"><thead><tr><th>Produit</th><th>Catégorie</th><th>Format</th><th>Visibilité</th><th>Actions</th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><b>{product.name}</b><span>/{product.slug}</span></td><td>{product.category_name}</td><td>{product.format}</td><td><button className={product.is_active ? 'visibility active' : 'visibility'} onClick={() => toggleProduct(product)}>{product.is_active ? 'En ligne' : 'Masqué'}</button></td><td className="table-actions"><button onClick={() => { setEditing(product); setShowForm(true); }}>Modifier</button><button className="danger-action" onClick={() => removeProduct(product)}>Supprimer</button></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><p>Aucun produit.</p></div>}</div>}</div>}
     {showForm && <ProductEditor product={editing} categories={categories} onClose={() => setShowForm(false)} onSaved={async () => { setShowForm(false); await refresh(); }} />}

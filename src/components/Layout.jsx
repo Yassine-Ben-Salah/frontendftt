@@ -31,7 +31,7 @@ export function Layout() {
         </button>
         <nav className={menuOpen ? 'main-nav open' : 'main-nav'}>
           <NavLink to="/" end onClick={closeMenu}>Accueil</NavLink>
-          <NavLink to="/catalogue" onClick={closeMenu}>Nos produits</NavLink>
+          <NavLink to="/catalogue" onClick={closeMenu}>Catalogue</NavLink>
           <Link to="/#distribution" onClick={closeMenu}>Comment ça marche</Link>
           <NavLink to="/contact" onClick={closeMenu}>Contact</NavLink>
           <Link to="/contact" className="nav-cta" onClick={closeMenu}>Demander un prix <ArrowUpRight size={16} /></Link>
