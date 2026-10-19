@@ -209,25 +209,32 @@ export function ContactPage() {
 }
 
 export function AdminGate() {
-  const token = localStorage.getItem('ftt-admin-token');
-  return token ? <AdminPage /> : <AdminLogin />;
+  const [token, setToken] = useState(() => localStorage.getItem('ftt-admin-token'));
+  return token
+    ? <AdminPage onLogout={() => setToken(null)} />
+    : <AdminLogin onAuthenticated={setToken} />;
 }
 
-function AdminLogin() {
+function AdminLogin({ onAuthenticated }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   async function submit(event) {
     event.preventDefault(); setError(''); setBusy(true);
     const form = new FormData(event.currentTarget);
-    try { const data = await api('/admin/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(form.entries())) }); localStorage.setItem('ftt-admin-token', data.token); navigate('/admin', { replace: true }); }
+    try {
+      const data = await api('/admin/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(form.entries())) });
+      localStorage.setItem('ftt-admin-token', data.token);
+      onAuthenticated(data.token);
+      navigate('/admin', { replace: true });
+    }
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
   return <section className="admin-login section-shell"><div className="admin-login-card"><span className="eyebrow">ESPACE ÉQUIPE</span><h1>Administration <em>Food Transfert.</em></h1><p>Connectez-vous pour gérer les produits et les demandes reçues.</p>{error && <ErrorMessage error={error} />}<form onSubmit={submit}><label>E-mail<input name="email" type="email" required autoComplete="username" /></label><label>Mot de passe<input name="password" type="password" required autoComplete="current-password" /></label><button className="button button-primary" disabled={busy}>{busy ? 'Connexion…' : 'Se connecter'} <ArrowRight size={17} /></button></form></div></section>;
 }
 
-function AdminPage() {
+function AdminPage({ onLogout }) {
   const [view, setView] = useState('quotes');
   const [quotes, setQuotes] = useState([]);
   const [products, setProducts] = useState([]);
@@ -243,7 +250,7 @@ function AdminPage() {
     try {
       const [p, c, q] = await Promise.all([api('/admin/products'), api('/categories'), api(`/admin/quotes${status ? `?status=${status}` : ''}`)]);
       setProducts(p); setCategories(c); setQuotes(q);
-    } catch (e) { setError(e.message); if (e.message.includes('Session')) { localStorage.removeItem('ftt-admin-token'); navigate('/admin/login', { replace: true }); } }
+    } catch (e) { setError(e.message); if (e.message.includes('Session')) { localStorage.removeItem('ftt-admin-token'); onLogout(); navigate('/admin/login', { replace: true }); } }
     finally { setLoading(false); }
   }
   useEffect(() => { refresh(); }, [status]);
@@ -265,7 +272,7 @@ function AdminPage() {
     try { await api(`/admin/products/${product.id}`, { method: 'PUT', body: JSON.stringify({ ...product, is_active: !product.is_active }) }); await refresh(); }
     catch (e) { setError(e.message); }
   }
-  function logout() { localStorage.removeItem('ftt-admin-token'); navigate('/admin/login', { replace: true }); }
+  function logout() { localStorage.removeItem('ftt-admin-token'); onLogout(); navigate('/admin/login', { replace: true }); }
   return <section className="admin-page section-shell">
     <div className="admin-heading"><div><span className="eyebrow">FOOD TRANSFERT / GESTION</span><h1>Bonjour, <em>équipe.</em></h1></div><button className="button button-outline" onClick={logout}>Déconnexion</button></div>
     <div className="admin-tabs"><button className={view === 'quotes' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('quotes')}>Demandes reçues <span>{quotes.filter((q) => q.status === 'new').length}</span></button><button className={view === 'products' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('products')}>Produits <span>{products.length}</span></button></div>
