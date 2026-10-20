@@ -26,7 +26,7 @@ export function HomePage() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const intervalId = window.setInterval(() => {
       setHeroSlideIndex((index) => (index + 1) % HERO_SLIDES.length);
-    }, 3000);
+    }, 5000);
     return () => window.clearInterval(intervalId);
   }, []);
   useEffect(() => {
