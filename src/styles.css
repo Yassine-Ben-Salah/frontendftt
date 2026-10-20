@@ -348,8 +348,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .store-controls { align-items: stretch; flex-direction: column; gap: 8px; }
   .store-search { width: 100%; min-height: 50px; }
   .store-search input { height: 48px; font-size: 16px; }
-  .store-count { align-self: flex-end; font-size: 10px; }
-  .store-categories { gap: 7px; margin: 0; padding-top: 12px; }
+  .store-count { display: none; }
+  .store-categories { gap: 7px; margin: 0; padding-top: 12px; scrollbar-width: none; }
+  .store-categories::-webkit-scrollbar { display: none; }
   .store-category { min-height: 40px; padding: 0 13px; font-size: 10px; }
   .store-results-heading { margin-bottom: 11px; }
   .store-results-heading h2 { font-size: 17px; }
