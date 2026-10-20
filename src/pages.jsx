@@ -7,13 +7,28 @@ import { ProductCard } from './components/ProductCard';
 function Loading({ label = 'Chargement…' }) { return <div className="state-message" role="status"><span className="spinner" />{label}</div>; }
 function ErrorMessage({ error }) { return <div className="error-message"><CircleAlert size={18} />{error}</div>; }
 
+const HERO_SLIDES = [
+  { src: '/hero/lait-en-poudre.jpg', alt: 'Lait en poudre et verre de lait', caption: 'Lait en poudre' },
+  { src: '/hero/sucre.jpg', alt: 'Sucre en poudre avec des citrons', caption: 'Sucre' },
+  { src: '/hero/paprika.jpg', alt: 'Paprika en poudre avec des poivrons rouges', caption: 'Paprika' },
+  { src: '/hero/amidon-de-mais.jpg', alt: 'Amidon de maïs avec un épi de maïs', caption: 'Amidon de maïs' }
+];
+
 export function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const intervalId = window.setInterval(() => {
+      setHeroSlideIndex((index) => (index + 1) % HERO_SLIDES.length);
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+  }, []);
   useEffect(() => {
     let active = true;
     Promise.all([api('/products'), api('/categories')])
@@ -34,43 +49,47 @@ export function HomePage() {
     { icon: PackageCheck, note: 'Produits spécifiques, à utiliser selon les précautions indiquées.' }
   ];
   return <>
+    <Link className="home-promo-banner" to="/catalogue" aria-label="Découvrir les produits dans le catalogue Food Transfert Tunisia">
+      <img src="/hero/food-transfert-banner-fhd.jpg" alt="Food Transfert Tunisia : ingrédients alimentaires, livraison partout en Tunisie et découverte des produits." />
+    </Link>
+    <section className="hero home-hero">
+      <div className="hero-copy">
+        <div className="eyebrow"><span className="eyebrow-line" /> FOOD TRANSFERT TUNISIA · BIENVENUE</div>
+        <h1>Les bons produits pour vos recettes et vos <em>envies.</em></h1>
+        <p>Découvrez nos ingrédients pour la cuisine et la pâtisserie. Consultez les formats, puis contactez-nous pour connaître les prix ou poser une question.</p>
+        <div className="hero-actions"><Link className="button button-primary" to="/catalogue">Explorer tout le catalogue <ArrowUpRight size={17} /></Link></div>
+      </div>
+      <div className="hero-visual home-hero-visual" role="region" aria-roledescription="carrousel" aria-label="Photos de nos ingrédients">
+        <img key={HERO_SLIDES[heroSlideIndex].src} src={HERO_SLIDES[heroSlideIndex].src} alt={HERO_SLIDES[heroSlideIndex].alt} />
+        <div className="hero-image-caption">
+          <span>{HERO_SLIDES[heroSlideIndex].caption}</span>
+          <div className="hero-slide-indicators" aria-label="Choisir une photo">
+            {HERO_SLIDES.map((slide, index) => <button key={slide.src} type="button" aria-label={`Afficher la photo : ${slide.caption}`} aria-pressed={heroSlideIndex === index} onClick={() => setHeroSlideIndex(index)} />)}
+          </div>
+        </div>
+        <div className="hero-stamp"><span>FOOD</span><b>FT</b><span>EN TUNISIE</span></div>
+      </div>
+    </section>
     <section className="home-catalog section-shell" aria-labelledby="store-title">
       <div className="store-heading">
         <div className="store-heading-copy">
           <span className="eyebrow">FOOD TRANSFERT TUNISIA · CATALOGUE</span>
-          <h1 id="store-title">Tout pour vos recettes,<br /><em>à portée de main.</em></h1>
+          <h2 id="store-title">Tout pour vos recettes,<br /><em>à portée de main.</em></h2>
           <p>Parcourez nos produits, comparez les formats et contactez-nous pour les prix et disponibilités.</p>
         </div>
-        <Link className="store-contact" to="/contact">
-          <span className="store-contact-icon"><MessageCircle size={19} /></span>
-          <span><b>Besoin d’un conseil ?</b><small>Nous sommes à votre écoute</small></span>
-          <ArrowUpRight size={18} />
-        </Link>
       </div>
-      <div className="store-controls">
-        <label className="store-search"><Search size={20} /><input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Rechercher un produit, un format…" aria-label="Rechercher un produit" /></label>
-        <span className="store-count">{loading ? 'Chargement du catalogue…' : `${visibleProducts.length} produit${visibleProducts.length === 1 ? '' : 's'}`}</span>
-      </div>
-      <div className="store-categories" aria-label="Filtrer par catégorie">
-        <button className={!activeCategory ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory('')}>Tout voir</button>
-        {categories.map((category) => <button key={category.id} className={activeCategory === category.slug ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory(category.slug)}>{category.name}</button>)}
+      <div className="store-filter-panel">
+        <div className="store-controls">
+          <label className="store-search"><Search size={20} /><input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Rechercher un produit, un format…" aria-label="Rechercher un produit" /></label>
+          <span className="store-count">{loading ? 'Chargement du catalogue…' : `${visibleProducts.length} produit${visibleProducts.length === 1 ? '' : 's'}`}</span>
+        </div>
+        <div className="store-categories" role="group" aria-label="Filtrer par catégorie">
+          <button type="button" aria-pressed={!activeCategory} className={!activeCategory ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory('')}>Tout voir</button>
+          {categories.map((category) => <button type="button" key={category.id} aria-pressed={activeCategory === category.slug} className={activeCategory === category.slug ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory(category.slug)}>{category.name}</button>)}
+        </div>
       </div>
       <div className="store-results-heading"><h2>{activeCategory ? categories.find((item) => item.slug === activeCategory)?.name : 'À découvrir'}</h2><span>Des produits sélectionnés pour vous</span></div>
       {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : visibleProducts.length ? <div className="product-grid home-product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => { setSearchTerm(''); setActiveCategory(''); }}>Effacer les filtres <ArrowRight size={16} /></button></div>}
-    </section>
-    <section className="hero home-hero">
-      <div className="hero-copy">
-        <div className="eyebrow"><span className="eyebrow-line" /> FOOD TRANSFERT TUNISIA · BIENVENUE</div>
-        <h2>Les bons produits pour vos recettes et vos <em>envies.</em></h2>
-        <p>Découvrez nos ingrédients pour la cuisine et la pâtisserie. Consultez les formats, puis contactez-nous pour connaître les prix ou poser une question.</p>
-        <div className="hero-actions"><Link className="button button-primary" to="/catalogue">Explorer tout le catalogue <ArrowUpRight size={17} /></Link><Link className="button button-outline" to="/contact">Nous contacter <ArrowRight size={16} /></Link></div>
-        <div className="hero-proof"><span className="proof-mark"><Check size={15} /></span><span><b>Des produits à découvrir</b><br />Cuisine, pâtisserie et plus</span><span className="proof-divider" /><span className="proof-mark"><Check size={15} /></span><span><b>À votre écoute</b><br />Appelez-nous ou écrivez-nous</span></div>
-      </div>
-      <div className="hero-visual home-hero-visual">
-        <img src="/products/cacao.jpg" alt="Poudre de cacao et ingrédients de cuisine" />
-        <div className="hero-image-caption"><span>De bons ingrédients pour vos préparations</span></div>
-        <div className="hero-stamp"><span>FOOD</span><b>FT</b><span>EN TUNISIE</span></div>
-      </div>
     </section>
     <section className="category-section section-shell" id="gammes">
       <div className="section-heading"><div><span className="eyebrow">NOS PRODUITS</span><h2>Pour la cuisine,<br /><em>la pâtisserie et plus.</em></h2></div><p>Parcourez les catégories, découvrez les formats et trouvez les produits qu’il vous faut.</p></div>
@@ -124,8 +143,18 @@ export function CatalogPage() {
   };
   return <section className="catalog-page section-shell">
     <div className="page-intro"><span className="eyebrow">FOOD TRANSFERT TUNISIA / PRODUITS</span><h1>Le catalogue <em>en détail.</em></h1><p>Des ingrédients à découvrir pour la cuisine, la pâtisserie et d’autres usages indiqués.</p></div>
-    <div className="catalog-toolbar"><div className="filter-pills"><button className={!category ? 'filter-pill active' : 'filter-pill'} onClick={() => updateParam('category', '')}>Tout voir</button>{categories.map((item) => <button key={item.id} className={category === item.slug ? 'filter-pill active' : 'filter-pill'} onClick={() => updateParam('category', item.slug)}>{item.name}</button>)}</div>
-      <label className="search-field"><Search size={18} /><input value={search} onChange={(event) => updateParam('search', event.target.value)} placeholder="Rechercher un produit" /><span>⌕</span></label>
+    <div className="catalog-toolbar">
+      <div className="catalog-search-group">
+        <span className="catalog-control-label">RECHERCHER UN PRODUIT</span>
+        <label className="search-field"><Search size={19} /><input type="search" value={search} onChange={(event) => updateParam('search', event.target.value)} placeholder="Nom du produit…" aria-label="Rechercher un produit" /></label>
+      </div>
+      <div className="catalog-category-group">
+        <span className="catalog-control-label">CATÉGORIES</span>
+        <div className="filter-pills" role="group" aria-label="Filtrer par catégorie">
+          <button type="button" className={!category ? 'filter-pill active' : 'filter-pill'} aria-pressed={!category} onClick={() => updateParam('category', '')}>Tout voir</button>
+          {categories.map((item) => <button type="button" key={item.id} className={category === item.slug ? 'filter-pill active' : 'filter-pill'} aria-pressed={category === item.slug} onClick={() => updateParam('category', item.slug)}>{item.name}</button>)}
+        </div>
+      </div>
     </div>
     <div className="catalog-count">{loading ? 'Recherche en cours…' : `${products.length} produit${products.length === 1 ? '' : 's'} disponible${products.length === 1 ? '' : 's'}`}</div>
     {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : products.length ? <div className="product-grid catalog-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => setSearchParams({})}>Effacer les filtres <ArrowRight size={16} /></button></div>}
