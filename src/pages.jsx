@@ -88,7 +88,7 @@ export function HomePage() {
           {categories.map((category) => <button type="button" key={category.id} aria-pressed={activeCategory === category.slug} className={activeCategory === category.slug ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory(category.slug)}>{category.name}</button>)}
         </div>
       </div>
-      <div className="store-results-heading"><h2>{activeCategory ? categories.find((item) => item.slug === activeCategory)?.name : 'À découvrir'}</h2></div>
+      {activeCategory && <div className="store-results-heading"><h2>{categories.find((item) => item.slug === activeCategory)?.name}</h2></div>}
       {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : visibleProducts.length ? <div className="product-grid home-product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => { setSearchTerm(''); setActiveCategory(''); }}>Effacer les filtres <ArrowRight size={16} /></button></div>}
     </section>
     <section className="category-section section-shell" id="gammes">
