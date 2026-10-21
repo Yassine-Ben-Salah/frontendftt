@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, CircleAlert, FlaskConical, MessageCircle, PackageCheck, Search, ShieldCheck, Wheat } from 'lucide-react';
-import { api, COMPANY_EMAIL, COMPANY_PHONE, COMPANY_WHATSAPP, imageSource } from './api';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, CircleAlert, FlaskConical, MapPin, MessageCircle, PackageCheck, Search, ShieldCheck, Truck, Wheat } from 'lucide-react';
+import { api, COMPANY_ADDRESS, COMPANY_EMAIL, COMPANY_PHONE, COMPANY_WHATSAPP, imageSource } from './api';
 import { ProductCard } from './components/ProductCard';
 
 function Loading({ label = 'Chargement…' }) { return <div className="state-message" role="status"><span className="spinner" />{label}</div>; }
@@ -49,10 +49,27 @@ export function HomePage() {
     { icon: PackageCheck, note: 'Produits spécifiques, à utiliser selon les précautions indiquées.' }
   ];
   return <>
-    <Link className="home-promo-banner" to="/catalogue" aria-label="Découvrir les produits dans le catalogue Food Transfert Tunisia">
-      <img src="/hero/food-transfert-banner-fhd.jpg" alt="Food Transfert Tunisia : ingrédients alimentaires, livraison partout en Tunisie et découverte des produits." />
-    </Link>
-    <section className="hero home-hero">
+    <section className="home-promo-banner" aria-labelledby="promo-banner-title" data-reveal>
+      <div className="promo-banner-image-wrap">
+        <picture>
+          <source media="(max-width: 760px)" srcSet="/hero/Fresh%20Ingredients%20and%20Food%20Logistics.png" />
+          <img src="/hero/Sunlit%20Ingredients%20and%20Logistics%20Warehouse.png" alt="Bannière Food Transfert Tunisia avec des ingrédients alimentaires et la livraison partout en Tunisie." />
+        </picture>
+        <div className="promo-banner-content">
+          <h2 id="promo-banner-title">Vos ingrédients alimentaires,<br /><em>notre priorité.</em></h2>
+          <p className="promo-banner-products">Sucre <i>·</i> Cacao <i>·</i> Lait en poudre <i>·</i> Amidon de maïs <i>·</i> Paprika</p>
+          <p className="promo-banner-description">Des ingrédients de qualité pour vos recettes, livrés partout en Tunisie.</p>
+          <Link className="promo-banner-cta" to="/catalogue">Découvrir nos produits <ArrowRight size={18} aria-hidden="true" /></Link>
+        </div>
+        <div className="promo-location"><MapPin size={25} aria-hidden="true" /><span>Livraison partout<br />en Tunisie</span></div>
+        <div className="promo-highlights" role="group" aria-label="Nos engagements">
+          <div className="promo-highlight"><ShieldCheck size={18} aria-hidden="true" /><span>Qualité maîtrisée</span></div>
+          <div className="promo-highlight"><Truck size={18} aria-hidden="true" /><span>Transport fiable</span></div>
+          <div className="promo-highlight"><PackageCheck size={18} aria-hidden="true" /><span>Une gamme pour vos recettes</span></div>
+        </div>
+      </div>
+    </section>
+    <section className="hero home-hero" data-reveal>
       <div className="hero-copy">
         <div className="eyebrow"><span className="eyebrow-line" /> FOOD TRANSFERT TUNISIA · BIENVENUE</div>
         <h1>Les bons produits pour vos recettes et vos <em>envies.</em></h1>
@@ -67,10 +84,10 @@ export function HomePage() {
             {HERO_SLIDES.map((slide, index) => <button key={slide.src} type="button" aria-label={`Afficher la photo : ${slide.caption}`} aria-pressed={heroSlideIndex === index} onClick={() => setHeroSlideIndex(index)} />)}
           </div>
         </div>
-        <div className="hero-stamp"><span>FOOD</span><b>FT</b><span>EN TUNISIE</span></div>
       </div>
     </section>
-    <section className="home-catalog section-shell" aria-labelledby="store-title">
+
+    <section className="home-catalog section-shell" aria-labelledby="store-title" data-reveal>
       <div className="store-heading">
         <div className="store-heading-copy">
           <span className="eyebrow">FOOD TRANSFERT TUNISIA · CATALOGUE</span>
@@ -78,10 +95,9 @@ export function HomePage() {
           <p>Parcourez nos produits, comparez les formats et contactez-nous pour les prix et disponibilités.</p>
         </div>
       </div>
-      <div className="store-filter-panel">
+      <div className="store-filter-panel" data-reveal>
         <div className="store-controls">
           <label className="store-search"><Search size={20} /><input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Rechercher un produit, un format…" aria-label="Rechercher un produit" /></label>
-          <span className="store-count">{loading ? 'Chargement du catalogue…' : `${visibleProducts.length} produit${visibleProducts.length === 1 ? '' : 's'}`}</span>
         </div>
         <div className="store-categories" role="group" aria-label="Filtrer par catégorie">
           <button type="button" aria-pressed={!activeCategory} className={!activeCategory ? 'store-category active' : 'store-category'} onClick={() => setActiveCategory('')}>Tout voir</button>
@@ -91,7 +107,14 @@ export function HomePage() {
       {activeCategory && <div className="store-results-heading"><h2>{categories.find((item) => item.slug === activeCategory)?.name}</h2></div>}
       {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : visibleProducts.length ? <div className="product-grid home-product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => { setSearchTerm(''); setActiveCategory(''); }}>Effacer les filtres <ArrowRight size={16} /></button></div>}
     </section>
-    <section className="category-section section-shell" id="gammes">
+
+    <div className="ingredient-marquee" data-reveal>
+      <div className="ingredient-marquee-track" aria-hidden="true">
+        {[0, 1].map((set) => <div className="ingredient-marquee-set" key={set}><span>Sucre</span><i>✦</i><span>Cacao</span><i>✦</i><span>Lait en poudre</span><i>✦</i><span>Amidon de maïs</span><i>✦</i><span>Paprika</span><i>✦</i></div>)}
+      </div>
+    </div>
+
+    <section className="category-section section-shell" id="gammes" data-reveal>
       <div className="section-heading"><div><span className="eyebrow">NOS PRODUITS</span><h2>Pour la cuisine,<br /><em>la pâtisserie et plus.</em></h2></div><p>Parcourez les catégories, découvrez les formats et trouvez les produits qu’il vous faut.</p></div>
       <div className="category-grid">
         {categories.map((category, index) => {
@@ -103,7 +126,7 @@ export function HomePage() {
         })}
       </div>
     </section>
-    <section className="how-section" id="distribution">
+    <section className="how-section" id="distribution" data-reveal>
       <div className="section-shell">
         <div className="section-heading"><div><span className="eyebrow">C’EST SIMPLE</span><h2>Trouvez ce qu’il vous faut,<br /><em>en quelques étapes.</em></h2></div><p>Parcourez le catalogue, vérifiez les informations du produit et contactez-nous pour connaître son prix ou sa disponibilité.</p></div>
         <div className="steps-grid">
@@ -113,7 +136,7 @@ export function HomePage() {
         </div>
       </div>
     </section>
-    <section className="quote-band"><div className="quote-band-inner"><div><span className="eyebrow">UNE QUESTION ?</span><h2>Nous sommes là<br /><em>pour vous répondre.</em></h2></div><div className="quote-band-actions"><Link className="button button-light" to="/contact">Nous contacter <ArrowUpRight size={17} /></Link><a className="button button-whatsapp" href={`https://wa.me/${COMPANY_WHATSAPP}`} target="_blank" rel="noreferrer"><MessageCircle size={17} /> WhatsApp</a></div></div></section>
+    <section className="quote-band" data-reveal><div className="quote-band-inner"><div><span className="eyebrow">UNE QUESTION ?</span><h2>Nous sommes là<br /><em>pour vous répondre.</em></h2></div><div className="quote-band-actions"><Link className="button button-light" to="/contact">Nous contacter <ArrowUpRight size={17} /></Link><a className="button button-whatsapp" href={`https://wa.me/${COMPANY_WHATSAPP}`} target="_blank" rel="noreferrer"><MessageCircle size={17} /> WhatsApp</a></div></div></section>
   </>;
 }
 
@@ -141,9 +164,9 @@ export function CatalogPage() {
     if (value) next.set(key, value); else next.delete(key);
     setSearchParams(next);
   };
-  return <section className="catalog-page section-shell">
-    <div className="page-intro"><span className="eyebrow">FOOD TRANSFERT TUNISIA / PRODUITS</span><h1>Le catalogue <em>en détail.</em></h1><p>Des ingrédients à découvrir pour la cuisine, la pâtisserie et d’autres usages indiqués.</p></div>
-    <div className="catalog-toolbar">
+  return <section className="catalog-page section-shell" data-reveal>
+    <div className="page-intro" data-reveal><span className="eyebrow">FOOD TRANSFERT TUNISIA / PRODUITS</span><h1>Le catalogue <em>en détail.</em></h1><p>Des ingrédients à découvrir pour la cuisine, la pâtisserie et d’autres usages indiqués.</p></div>
+    <div className="catalog-toolbar" data-reveal>
       <div className="catalog-search-group">
         <span className="catalog-control-label">RECHERCHER UN PRODUIT</span>
         <label className="search-field"><Search size={19} /><input type="search" value={search} onChange={(event) => updateParam('search', event.target.value)} placeholder="Nom du produit…" aria-label="Rechercher un produit" /></label>
@@ -166,9 +189,9 @@ export function ProductPage() {
   const [product, setProduct] = useState(null);
   const [error, setError] = useState('');
   useEffect(() => { setProduct(null); setError(''); api(`/products/${slug}`).then(setProduct).catch((e) => setError(e.message)); }, [slug]);
-  if (error) return <section className="section-shell product-error"><ErrorMessage error={error} /><Link className="text-link" to="/catalogue"><ArrowLeft size={16} /> Retour au catalogue</Link></section>;
+  if (error) return <section className="section-shell product-error" data-reveal><ErrorMessage error={error} /><Link className="text-link" to="/catalogue"><ArrowLeft size={16} /> Retour au catalogue</Link></section>;
   if (!product) return <Loading label="Chargement du produit…" />;
-  return <section className="product-detail section-shell">
+  return <section className="product-detail section-shell" data-reveal>
     <div className="breadcrumb"><Link to="/catalogue">Catalogue</Link><span>/</span><span>{product.category_name}</span></div>
     <div className="detail-layout"><div className="detail-image"><img src={imageSource(product)} alt={product.name} /><span className="detail-image-note">FOOD TRANSFERT / SÉLECTION</span></div>
       <div className="detail-copy"><span className="eyebrow">{product.category_name}</span><h1>{product.name}</h1><div className="format-line"><PackageCheck size={18} /> Format disponible <b>{product.format}</b></div><p className="detail-description">{product.description}</p>
@@ -222,9 +245,9 @@ export function ContactPage() {
     }
     finally { setSending(false); }
   }
-  return <section className="contact-page section-shell">
-    <div className="page-intro"><span className="eyebrow">À VOTRE ÉCOUTE</span><h1>Une question ? <em>Écrivez-nous.</em></h1><p>Demandez un prix, vérifiez la disponibilité d’un produit ou posez-nous une question.</p></div>
-    <div className="contact-layout"><div className="contact-aside"><div className="aside-label">CONTACT</div><h2>Nous sommes<br />là pour <em>vous.</em></h2><p>Nous répondons à vos questions sur les produits, les formats et leur utilisation.</p><a className="contact-channel" href={`mailto:${COMPANY_EMAIL}`}><span><ArrowUpRight size={15} /></span>{COMPANY_EMAIL}</a><a className="contact-channel" href={`tel:${COMPANY_PHONE.replace(/[^\d+]/g, '')}`}><span><ArrowUpRight size={15} /></span>{COMPANY_PHONE}</a><a className="contact-channel whatsapp-channel" href={`https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent('Bonjour, je souhaite obtenir des informations sur vos produits.')}`} target="_blank" rel="noreferrer"><span><MessageCircle size={15} /></span>Écrire sur WhatsApp</a><div className="aside-rule" /><span className="aside-label">FOOD TRANSFERT TUNISIA</span><p className="aside-small">Des ingrédients et des produits à découvrir pour vos recettes et vos besoins.</p></div>
+  return <section className="contact-page section-shell" data-reveal>
+    <div className="page-intro" data-reveal><span className="eyebrow">À VOTRE ÉCOUTE</span><h1>Une question ? <em>Écrivez-nous.</em></h1><p>Demandez un prix, vérifiez la disponibilité d’un produit ou posez-nous une question.</p></div>
+    <div className="contact-layout"><div className="contact-aside"><div className="aside-label">CONTACT</div><h2>Nous sommes<br />là pour <em>vous.</em></h2><p>Nous répondons à vos questions sur les produits, les formats et leur utilisation.</p><a className="contact-channel" href={`mailto:${COMPANY_EMAIL}`}><span><ArrowUpRight size={15} /></span>{COMPANY_EMAIL}</a><a className="contact-channel" href={`tel:${COMPANY_PHONE.replace(/[^\d+]/g, '')}`}><span><ArrowUpRight size={15} /></span>{COMPANY_PHONE}</a><a className="contact-channel whatsapp-channel" href={`https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent('Bonjour, je souhaite obtenir des informations sur vos produits.')}`} target="_blank" rel="noreferrer"><span><MessageCircle size={15} /></span>Écrire sur WhatsApp</a><a className="contact-channel" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY_ADDRESS)}`} target="_blank" rel="noreferrer"><span><MapPin size={15} /></span>{COMPANY_ADDRESS}</a><div className="aside-rule" /><span className="aside-label">FOOD TRANSFERT TUNISIA</span><p className="aside-small">Des ingrédients et des produits à découvrir pour vos recettes et vos besoins.</p></div>
       <div className="form-panel"><div className="form-title"><div><span className="eyebrow">INFORMATIONS & PRIX</span><h2>Votre demande</h2></div><span className="required-note">* Champs obligatoires</span></div>
         {success ? <div className="success-state"><span className="success-icon"><Check size={28} /></span><h3>Demande bien reçue.</h3><p>{emailSent ? 'Votre demande est enregistrée. Nous vous répondrons au numéro indiqué. Un e-mail de notification a également été envoyé.' : 'Votre demande est enregistrée, mais l’e-mail de notification interne n’a pas été envoyé. WhatsApp s’ouvre avec les détails : appuyez sur Envoyer pour nous écrire.'}</p><a className="button button-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle size={17} /> Ouvrir WhatsApp</a><button className="text-link" onClick={() => setSuccess(false)}>Envoyer une autre demande <ArrowRight size={16} /></button></div> : <form className="quote-form" onSubmit={submit}>
           {error && <ErrorMessage error={error} />}
@@ -260,7 +283,7 @@ function AdminLogin({ onAuthenticated }) {
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
-  return <section className="admin-login section-shell"><div className="admin-login-card"><span className="eyebrow">ESPACE ÉQUIPE</span><h1>Administration <em>Food Transfert.</em></h1><p>Connectez-vous pour gérer les produits et les demandes reçues.</p>{error && <ErrorMessage error={error} />}<form onSubmit={submit}><label>E-mail<input name="email" type="email" required autoComplete="username" /></label><label>Mot de passe<input name="password" type="password" required autoComplete="current-password" /></label><button className="button button-primary" disabled={busy}>{busy ? 'Connexion…' : 'Se connecter'} <ArrowRight size={17} /></button></form></div></section>;
+  return <section className="admin-login section-shell" data-reveal><div className="admin-login-card"><span className="eyebrow">ESPACE ÉQUIPE</span><h1>Administration <em>Food Transfert.</em></h1><p>Connectez-vous pour gérer les produits et les demandes reçues.</p>{error && <ErrorMessage error={error} />}<form onSubmit={submit}><label>E-mail<input name="email" type="email" required autoComplete="username" /></label><label>Mot de passe<input name="password" type="password" required autoComplete="current-password" /></label><button className="button button-primary" disabled={busy}>{busy ? 'Connexion…' : 'Se connecter'} <ArrowRight size={17} /></button></form></div></section>;
 }
 
 function AdminPage({ onLogout }) {
@@ -302,7 +325,7 @@ function AdminPage({ onLogout }) {
     catch (e) { setError(e.message); }
   }
   function logout() { localStorage.removeItem('ftt-admin-token'); onLogout(); navigate('/admin/login', { replace: true }); }
-  return <section className="admin-page section-shell">
+  return <section className="admin-page section-shell" data-reveal>
     <div className="admin-heading"><div><span className="eyebrow">FOOD TRANSFERT / GESTION</span><h1>Bonjour, <em>équipe.</em></h1></div><button className="button button-outline" onClick={logout}>Déconnexion</button></div>
     <div className="admin-tabs"><button className={view === 'quotes' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('quotes')}>Demandes reçues <span>{quotes.filter((q) => q.status === 'new').length}</span></button><button className={view === 'products' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('products')}>Produits <span>{products.length}</span></button></div>
     {error && <ErrorMessage error={error} />}
@@ -372,4 +395,4 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
     </form></div></div>;
 }
 
-export function NotFoundPage() { return <section className="empty-state not-found"><span className="eyebrow">404 / PAGE INTROUVABLE</span><h1>Cette page n’existe pas.</h1><Link className="button button-primary" to="/">Retour à l’accueil <ArrowLeft size={16} /></Link></section>; }
+export function NotFoundPage() { return <section className="empty-state not-found" data-reveal><span className="eyebrow">404 / PAGE INTROUVABLE</span><h1>Cette page n’existe pas.</h1><Link className="button button-primary" to="/">Retour à l’accueil <ArrowLeft size={16} /></Link></section>; }

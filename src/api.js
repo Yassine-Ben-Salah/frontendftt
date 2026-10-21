@@ -3,6 +3,7 @@ const API_ORIGIN = new URL(API_URL, window.location.origin).origin;
 export const COMPANY_EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'Foodtransferttunisia@outlook.fr';
 export const COMPANY_PHONE = import.meta.env.VITE_COMPANY_PHONE || '+216 22 066 284';
 export const COMPANY_WHATSAPP = (import.meta.env.VITE_COMPANY_WHATSAPP || '21622066284').replace(/\D/g, '');
+export const COMPANY_ADDRESS = 'Cité El Hadab, Kalaa Kebira, Sousse 4060';
 
 export async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
