@@ -9,7 +9,7 @@ function ErrorMessage({ error }) { return <div className="error-message"><Circle
 
 const HERO_SLIDES = [
   { src: '/hero/lait-en-poudre.jpg', alt: 'Lait en poudre et verre de lait', caption: 'Lait en poudre' },
-  { src: '/hero/sucre.jpg', alt: 'Sucre en poudre avec des citrons', caption: 'Sucre' },
+  { src: '/hero/sucre.jpg', alt: 'Acide citrique en poudre avec des citrons', caption: 'Acide citrique' },
   { src: '/hero/paprika.jpg', alt: 'Paprika en poudre avec des poivrons rouges', caption: 'Paprika' },
   { src: '/hero/amidon-de-mais.jpg', alt: 'Amidon de maïs avec un épi de maïs', caption: 'Amidon de maïs' }
 ];
