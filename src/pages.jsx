@@ -49,11 +49,12 @@ export function HomePage() {
     { icon: PackageCheck, note: 'Produits spécifiques, à utiliser selon les précautions indiquées.' }
   ];
   return <>
-    <section className="home-promo-banner" aria-labelledby="promo-banner-title" data-reveal>
+    <section className="home-promo-banner" aria-labelledby="promo-banner-title">
       <div className="promo-banner-image-wrap">
         <picture>
-          <source media="(max-width: 760px)" srcSet="/hero/Fresh%20Ingredients%20and%20Food%20Logistics.png" />
-          <img src="/hero/Sunlit%20Ingredients%20and%20Logistics%20Warehouse.png" alt="Bannière Food Transfert Tunisia avec des ingrédients alimentaires et la livraison partout en Tunisie." />
+          <source media="(max-width: 760px)" srcSet="/hero/photo_right.png" />
+          <source media="(min-width: 761px)" srcSet="/hero/banner_no_top_logo.png" />
+          <img src="/hero/photo_right.png" alt="Bannière Food Transfert Tunisia présentant les ingrédients alimentaires et le camion de livraison." />
         </picture>
         <div className="promo-banner-content">
           <h2 id="promo-banner-title">Vos ingrédients alimentaires,<br /><em>notre priorité.</em></h2>
