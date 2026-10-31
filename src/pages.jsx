@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, CircleAlert, FlaskConical, MapPin, MessageCircle, PackageCheck, Search, ShieldCheck, Truck, Wheat } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, CircleAlert, Eye, EyeOff, FlaskConical, MapPin, MessageCircle, PackageCheck, Search, ShieldCheck, Truck, Wheat } from 'lucide-react';
 import { api, COMPANY_ADDRESS, COMPANY_EMAIL, COMPANY_PHONE, COMPANY_WHATSAPP, imageSource } from './api';
 import { ProductCard } from './components/ProductCard';
 
@@ -180,7 +180,7 @@ export function CatalogPage() {
         </div>
       </div>
     </div>
-    <div className="catalog-count">{loading ? 'Recherche en cours…' : `${products.length} produit${products.length === 1 ? '' : 's'} disponible${products.length === 1 ? '' : 's'}`}</div>
+    <div className="catalog-count">{loading ? 'Recherche en cours…' : `${products.length} produit${products.length === 1 ? '' : 's'} dans le catalogue`}</div>
     {error ? <ErrorMessage error={error} /> : loading ? <Loading label="Chargement du catalogue…" /> : products.length ? <div className="product-grid catalog-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="empty-state"><PackageCheck size={28} /><h2>Aucun produit trouvé</h2><p>Essayez un autre nom ou une autre catégorie.</p><button className="text-link" onClick={() => setSearchParams({})}>Effacer les filtres <ArrowRight size={16} /></button></div>}
   </section>;
 }
@@ -195,7 +195,7 @@ export function ProductPage() {
   return <section className="product-detail section-shell" data-reveal>
     <div className="breadcrumb"><Link to="/catalogue">Catalogue</Link><span>/</span><span>{product.category_name}</span></div>
     <div className="detail-layout"><div className="detail-image"><img src={imageSource(product)} alt={product.name} /><span className="detail-image-note">FOOD TRANSFERT / SÉLECTION</span></div>
-      <div className="detail-copy"><span className="eyebrow">{product.category_name}</span><h1>{product.name}</h1><div className="format-line"><PackageCheck size={18} /> Format disponible <b>{product.format}</b></div><p className="detail-description">{product.description}</p>
+      <div className="detail-copy"><span className="eyebrow">{product.category_name}</span><h1>{product.name}</h1><div className="format-line"><PackageCheck size={18} /> Format disponible <b>{product.format}</b></div><div className={`product-availability detail-availability ${product.is_available ? 'available' : 'unavailable'}`}>{product.is_available ? 'Disponible' : 'Indisponible'}</div><p className="detail-description">{product.description}</p>
         {product.safety_note && <div className="safety-note"><ShieldCheck size={20} /><div><b>Consignes de sécurité</b><p>{product.safety_note}</p></div></div>}
         <Link className="button button-primary" to={`/contact?product=${product.id}`}>Demander le prix <ArrowUpRight size={17} /></Link><p className="detail-footnote">Écrivez-nous pour connaître le prix et la disponibilité.</p>
       </div></div>
@@ -262,29 +262,38 @@ export function ContactPage() {
 }
 
 export function AdminGate() {
-  const [token, setToken] = useState(() => localStorage.getItem('ftt-admin-token'));
-  return token
-    ? <AdminPage onLogout={() => setToken(null)} />
-    : <AdminLogin onAuthenticated={setToken} />;
+  const [admin, setAdmin] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  useEffect(() => {
+    localStorage.removeItem('ftt-admin-token');
+    api('/admin/session')
+      .then((data) => setAdmin(data.admin))
+      .catch(() => setAdmin(null))
+      .finally(() => setCheckingSession(false));
+  }, []);
+  if (checkingSession) return <section className="section-shell"><Loading /></section>;
+  return admin
+    ? <AdminPage onLogout={() => setAdmin(null)} />
+    : <AdminLogin onAuthenticated={setAdmin} />;
 }
 
 function AdminLogin({ onAuthenticated }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   async function submit(event) {
     event.preventDefault(); setError(''); setBusy(true);
     const form = new FormData(event.currentTarget);
     try {
       const data = await api('/admin/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(form.entries())) });
-      localStorage.setItem('ftt-admin-token', data.token);
-      onAuthenticated(data.token);
+      onAuthenticated(data.admin);
       navigate('/admin', { replace: true });
     }
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
-  return <section className="admin-login section-shell" data-reveal><div className="admin-login-card"><span className="eyebrow">ESPACE ÉQUIPE</span><h1>Administration <em>Food Transfert.</em></h1><p>Connectez-vous pour gérer les produits et les demandes reçues.</p>{error && <ErrorMessage error={error} />}<form onSubmit={submit}><label>E-mail<input name="email" type="email" required autoComplete="username" /></label><label>Mot de passe<input name="password" type="password" required autoComplete="current-password" /></label><button className="button button-primary" disabled={busy}>{busy ? 'Connexion…' : 'Se connecter'} <ArrowRight size={17} /></button></form></div></section>;
+  return <section className="admin-login section-shell" data-reveal><div className="admin-login-card"><span className="eyebrow">ESPACE ÉQUIPE</span><h1>Administration <em>Food Transfert.</em></h1><p>Connectez-vous pour gérer les produits et les demandes reçues.</p>{error && <ErrorMessage error={error} />}<form onSubmit={submit}><label>E-mail<input name="email" type="email" required autoComplete="username" /></label><label>Mot de passe<div className="password-field"><input name="password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" /><button type="button" className="password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} aria-pressed={showPassword} title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label><button className="button button-primary" disabled={busy}>{busy ? 'Connexion…' : 'Se connecter'} <ArrowRight size={17} /></button></form></div></section>;
 }
 
 function AdminPage({ onLogout }) {
@@ -303,7 +312,7 @@ function AdminPage({ onLogout }) {
     try {
       const [p, c, q] = await Promise.all([api('/admin/products'), api('/categories'), api(`/admin/quotes${status ? `?status=${status}` : ''}`)]);
       setProducts(p); setCategories(c); setQuotes(q);
-    } catch (e) { setError(e.message); if (e.message.includes('Session')) { localStorage.removeItem('ftt-admin-token'); onLogout(); navigate('/admin/login', { replace: true }); } }
+    } catch (e) { setError(e.message); if (e.message.includes('Session') || e.message.includes('Authentification')) { onLogout(); navigate('/admin/login', { replace: true }); } }
     finally { setLoading(false); }
   }
   useEffect(() => { refresh(); }, [status]);
@@ -325,7 +334,11 @@ function AdminPage({ onLogout }) {
     try { await api(`/admin/products/${product.id}`, { method: 'PUT', body: JSON.stringify({ ...product, is_active: !product.is_active }) }); await refresh(); }
     catch (e) { setError(e.message); }
   }
-  function logout() { localStorage.removeItem('ftt-admin-token'); onLogout(); navigate('/admin/login', { replace: true }); }
+  async function logout() {
+    try { await api('/admin/logout', { method: 'POST' }); }
+    catch (e) { setError(e.message); return; }
+    onLogout(); navigate('/admin/login', { replace: true });
+  }
   return <section className="admin-page section-shell" data-reveal>
     <div className="admin-heading"><div><span className="eyebrow">FOOD TRANSFERT / GESTION</span><h1>Bonjour, <em>équipe.</em></h1></div><button className="button button-outline" onClick={logout}>Déconnexion</button></div>
     <div className="admin-tabs"><button className={view === 'quotes' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('quotes')}>Demandes reçues <span>{quotes.filter((q) => q.status === 'new').length}</span></button><button className={view === 'products' ? 'admin-tab active' : 'admin-tab'} onClick={() => setView('products')}>Produits <span>{products.length}</span></button></div>
@@ -333,7 +346,7 @@ function AdminPage({ onLogout }) {
     {view === 'quotes' ? <div className="admin-content"><div className="admin-toolbar"><div><h2>Demandes reçues</h2><p>Suivi des questions et demandes de prix envoyées depuis le site.</p></div><label className="select-filter">Statut <span><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Tous les statuts</option><option value="new">Nouvelles</option><option value="contacted">Contactées</option><option value="closed">Clôturées</option></select><ChevronDown size={15} /></span></label></div>
       {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table"><thead><tr><th>Demande</th><th>Produit / quantité</th><th>Reçue le</th><th>Statut</th><th>Action</th></tr></thead><tbody>{quotes.map((quote) => <tr key={quote.id}><td><b>{quote.name}</b>{quote.email && <a href={`mailto:${quote.email}`}>{quote.email}</a>}<a href={`tel:${quote.phone.replace(/[^\d+]/g, '')}`}>{quote.phone}</a>{quote.message && <small>{quote.message}</small>}</td><td>{quote.product_name || 'Produit non précisé'}<span>{quote.quantity}</span></td><td>{new Date(quote.created_at).toLocaleDateString('fr-FR')}</td><td><span className={`status-badge ${quote.status}`}>{quote.status === 'new' ? 'Nouvelle' : quote.status === 'contacted' ? 'Contactée' : 'Clôturée'}</span></td><td className="table-actions"><select className="status-select" value={quote.status} onChange={(e) => changeStatus(quote.id, e.target.value)} aria-label={`Changer le statut de la demande ${quote.id}`}><option value="new">Nouvelle</option><option value="contacted">Contactée</option><option value="closed">Clôturée</option></select><button className="danger-action" onClick={() => removeQuote(quote)} aria-label={`Supprimer la demande de ${quote.name}`}>Supprimer</button></td></tr>)}</tbody></table>{!quotes.length && <div className="empty-state"><p>Aucune demande pour ce filtre.</p></div>}</div>}</div>
     : <div className="admin-content"><div className="admin-toolbar"><div><h2>Catalogue produits</h2><p>Gérez les fiches visibles sur le site.</p></div><button className="button button-primary" onClick={() => { setEditing(null); setShowForm(true); }}>Ajouter un produit <ArrowUpRight size={16} /></button></div>
-      {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table product-admin-table"><thead><tr><th>Produit</th><th>Catégorie</th><th>Format</th><th>Visibilité</th><th>Actions</th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><b>{product.name}</b><span>/{product.slug}</span></td><td>{product.category_name}</td><td>{product.format}</td><td><button className={product.is_active ? 'visibility active' : 'visibility'} onClick={() => toggleProduct(product)}>{product.is_active ? 'En ligne' : 'Masqué'}</button></td><td className="table-actions"><button onClick={() => { setEditing(product); setShowForm(true); }}>Modifier</button><button className="danger-action" onClick={() => removeProduct(product)}>Supprimer</button></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><p>Aucun produit.</p></div>}</div>}</div>}
+      {loading ? <Loading /> : <div className="table-scroll"><table className="admin-table product-admin-table"><thead><tr><th>Produit</th><th>Catégorie</th><th>Format</th><th>Stock</th><th>Visibilité</th><th>Actions</th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><b>{product.name}</b><span>/{product.slug}</span></td><td>{product.category_name}</td><td>{product.format}</td><td>{product.stock_quantity}</td><td><button className={product.is_active ? 'visibility active' : 'visibility'} onClick={() => toggleProduct(product)}>{product.is_active ? 'En ligne' : 'Masqué'}</button></td><td className="table-actions"><button onClick={() => { setEditing(product); setShowForm(true); }}>Modifier</button><button className="danger-action" onClick={() => removeProduct(product)}>Supprimer</button></td></tr>)}</tbody></table>{!products.length && <div className="empty-state"><p>Aucun produit.</p></div>}</div>}</div>}
     {showForm && <ProductEditor product={editing} categories={categories} onClose={() => setShowForm(false)} onSaved={async () => { setShowForm(false); await refresh(); }} />}
   </section>;
 }
@@ -380,7 +393,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
     const form = new FormData(event.currentTarget);
     const data = Object.fromEntries(form.entries());
     data.slug = data.slug || data.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    data.category_id = Number(data.category_id); data.image_url = imageUrl || null; data.safety_note = data.safety_note || null; data.is_active = form.get('is_active') === 'on';
+    data.category_id = Number(data.category_id); data.stock_quantity = Number(data.stock_quantity); data.image_url = imageUrl || null; data.safety_note = data.safety_note || null; data.is_active = form.get('is_active') === 'on';
     try { await api(product ? `/admin/products/${product.id}` : '/admin/products', { method: product ? 'PUT' : 'POST', body: JSON.stringify(data) }); await onSaved(); }
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
@@ -388,6 +401,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
   return <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}><div className="editor-modal" role="dialog" aria-modal="true" aria-labelledby="editor-title"><div className="modal-heading"><div><span className="eyebrow">CATALOGUE</span><h2 id="editor-title">{product ? 'Modifier le produit' : 'Nouveau produit'}</h2></div><button className="icon-button" onClick={onClose} aria-label="Fermer">×</button></div>
     {error && <ErrorMessage error={error} />}<form className="editor-form" onSubmit={submit}><div className="form-row"><label>Nom du produit *<input name="name" required defaultValue={product?.name || ''} /></label><label>Slug URL<input name="slug" defaultValue={product?.slug || ''} placeholder="généré automatiquement" /></label></div>
       <div className="form-row"><label>Catégorie *<select name="category_id" required defaultValue={product?.category_id || ''}><option value="" disabled>Choisir</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label>Format *<input name="format" required defaultValue={product?.format || ''} placeholder="Sac de 25 kg" /></label></div>
+      <label>Stock disponible (0 = indisponible) *<input name="stock_quantity" type="number" min="0" step="1" required defaultValue={product?.stock_quantity ?? 0} /></label>
       <label>Description *<textarea name="description" required minLength="10" rows="4" defaultValue={product?.description || ''} /></label><label>Consignes de sécurité<textarea name="safety_note" rows="3" defaultValue={product?.safety_note || ''} /></label>
       <label className="upload-field">Image du produit<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" onChange={upload} disabled={uploadingImage} /><span>{uploadingImage ? 'Téléversement de l’image…' : `JPEG, PNG, WebP ou AVIF · 5 Mo max${imageUrl ? ' · image chargée' : ''}`}</span></label>
       {imagePreview && <div className="image-preview"><img src={imagePreview} alt={`Aperçu de ${product?.name || 'l’image du produit'}`} /><span>Aperçu de l’image</span></div>}

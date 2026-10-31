@@ -11,5 +11,8 @@ export function ProductCard({ product }) {
     <div className="product-meta"><span>{product.category_name}</span><span>{product.format}</span></div>
     <h3><Link to={`/produit/${product.slug}`}>{product.name}</Link></h3>
     <p>{product.description}</p>
+    <div className={`product-availability ${product.is_available ? 'available' : 'unavailable'}`}>
+      {product.is_available ? 'Disponible' : 'Indisponible'}
+    </div>
   </article>;
 }

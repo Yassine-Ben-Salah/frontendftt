@@ -8,18 +8,15 @@ export const COMPANY_ADDRESS = 'Cité El Hadab, Kalaa Kebira, Sousse 4060';
 export async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData) && options.body) headers.set('Content-Type', 'application/json');
-  const token = localStorage.getItem('ftt-admin-token');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
   let response;
   try {
-    response = await fetch(`${API_URL}${path}`, { ...options, headers });
+    response = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include' });
   } catch {
     throw new Error('Le serveur est momentanément inaccessible. Réessayez dans un instant.');
   }
   if (response.status === 204) return null;
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (response.status === 401 && path !== '/admin/login') localStorage.removeItem('ftt-admin-token');
     throw new Error(payload.error || 'Une erreur est survenue.');
   }
   return payload;
